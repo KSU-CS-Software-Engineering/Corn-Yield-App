@@ -1,0 +1,4 @@
+{
+    "trainingCornDir": "Enter path to directory",
+    "testingCornDir" : "Enter path to directory"
+}
