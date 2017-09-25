@@ -10,7 +10,7 @@ It is suggested to install this project under a virtual environment to avoid con
 
 After cloning the repository, download the project dependencies with:
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 Lastly, copy the text inside "sample_config.json" into a file called "config.json" located
