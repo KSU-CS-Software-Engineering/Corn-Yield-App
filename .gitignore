@@ -1,1 +1,3 @@
 config.json
+debug/*
+corn_app/__pycache__
