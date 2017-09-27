@@ -78,6 +78,7 @@ def main(argv):
                 with Image.open(image_file) as image:
                     is_success = False
 
+                    # Determine which filter to use
                     if filter_id == BLACK_WHITE_FILTER_ID:
                         print('Converting image to black and white')
                         is_success = apply_black_white_filter(image)
