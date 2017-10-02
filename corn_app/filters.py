@@ -4,6 +4,7 @@ A set of image filters used in the project
 """
 from PIL import Image
 import sys
+import os
 
 #A filter function identifier used in the main function
 BLACK_WHITE_FILTER_ID = '0'
@@ -87,6 +88,9 @@ def main(argv):
 
                     if is_success:
                         try:
+                            if not os.path.isdir('../debug'): 
+                                os.makedir('../debug')
+                                
                             image.save(f'../debug/{file_name}')
                             print('File saved to debug folder')
                             return True
