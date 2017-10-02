@@ -89,7 +89,11 @@ def main(argv):
                     if is_success:
                         try:
                             if not os.path.isdir('../debug'): 
-                                os.makedir('../debug')
+                                print( 'Creating debug folder')
+                                curfilePath = os.path.abspath(__file__)
+                                curDir = os.path.abspath(os.path.join(curfilePath,os.pardir))
+                                parentDir = os.path.abspath(os.path.join(curDir,os.pardir))
+                                os.makedirs(os.path.join(parentDir, 'debug'))
                                 
                             image.save(f'../debug/{file_name}')
                             print('File saved to debug folder')
