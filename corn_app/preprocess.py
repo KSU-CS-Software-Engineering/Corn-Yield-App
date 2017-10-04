@@ -18,7 +18,7 @@ def standardize(image):
         image (Image): An open Image instance.
 
     Returns:
-        image(Image):
+        image(Image): new Image instance with new size parameters
     """
     if not image:
         print('No Image Found')
