@@ -16,9 +16,9 @@ class TestKernelCounter(unittest.TestCase):
                 test_function = preprocess.standardize
 
                 self.assertEqual(False, test_function(None))
-                self.assertEqual(True, test_function(image))
+                self.assertEqual(True, test_function(image).width == 1280 and test_function(image).height == 720)
 
-    
+
     def test_preprocess_main(self):
         test_function = preprocess.main
         mock_args = ['filepath', 'images/ear-7-512.jpg', 'test___preprocess.jpg']
@@ -27,7 +27,7 @@ class TestKernelCounter(unittest.TestCase):
         # test too few arguments and too many arguments
         self.assertEqual(False, test_function(mock_args[0:1]))
         self.assertEqual(False, test_function(mock_args))
-        del mock_args[3] 
+        del mock_args[3]
 
         # test invalid image path
         mock_args[1] = 'images/ear-7-512'
