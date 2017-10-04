@@ -18,7 +18,7 @@ def standardize(image):
         image (Image): An open Image instance.
 
     Returns:
-        bool: True if image was resized, false otherwise.
+        image(Image):
     """
     if not image:
         print('No Image Found')
@@ -65,7 +65,6 @@ def main(argv):
                     print('Image Resized')
 
                     try:
-
                         if not os.path.exists('../preprocessed/'):
                             # Create preprocessed folder if it does not exist
                             os.makedirs('../preprocessed/')
@@ -75,16 +74,13 @@ def main(argv):
                         return True
 
                     except:
-
                         print('Image could not be saved')
                         return False
 
                 except:
-
                     print('Image was not resized.')
                     return False
     except:
-
         print('Image could not be opened')
         return False
 
