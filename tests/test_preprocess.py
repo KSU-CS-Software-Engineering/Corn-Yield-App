@@ -3,21 +3,24 @@ import sys
 import os
 sys.path.append("..") #Add top level directory to python path for imports
 from corn_app import preprocess
+#from preprocess import STANDARD_WIDTH
+#from preprocess import STANDARD_HEIGHT
 from PIL import Image
 
-class TestKernelCounter(unittest.TestCase):
+class TestStandardize(unittest.TestCase):
     """ Tests preprocess.py functions
     """
 
     def test_preprocess_standardize(self):
         with open('images/ear-7-512.jpg', 'rb') as image_file:
             with Image.open(image_file) as image:
-
                 test_function = preprocess.standardize
 
                 self.assertEqual(False, test_function(None))
-                self.assertEqual(True, test_function(image).width == 1280 and test_function(image).height == 720)
 
+                # Test that image was resized
+                image = test_function(image)
+                self.assertEqual(True, image.width == preprocess.STANDARD_WIDTH and image.height == preprocess.STANDARD_HEIGHT)
 
     def test_preprocess_main(self):
         test_function = preprocess.main
