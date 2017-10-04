@@ -22,7 +22,7 @@ def standardize(image):
     """
     if not image:
         print('No Image Found')
-        return False
+        return None
 
     print('Resizing Image...')
 
