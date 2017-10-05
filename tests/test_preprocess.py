@@ -16,7 +16,7 @@ class TestStandardize(unittest.TestCase):
             with Image.open(image_file) as image:
                 test_function = preprocess.standardize
 
-                self.assertEqual(False, test_function(None))
+                self.assertEqual(True, test_function(None) is None)
 
                 # Test that image was resized
                 image = test_function(image)
