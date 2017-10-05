@@ -1,34 +1,42 @@
-"""
-filters.py
-A set of image filters used in the project
+"""A set of filters used in the project
+
+Example:
+    python3 filters.py /path/to/image.jpg test1.jpg 0
+
+Attributes:
+    LUMA_RED (float): Coefficient used to calculate the luminance of the red channel\
+        using the ITU BT.709 standard.
+    LUMA_GREEN (float): Coefficient used to calculate the luminance of the green channel\
+        ITU BT.709 standard.
+    LUMA_BLUE (float): Coefficient used to calculate the luminance of the blue channel\
+        ITU BT.709 standard.
+    LUMA_THRESHOLD (float): The threshold determing if a pixel should be black or white based\
+        from the lumanince.
+    BLACK_WHITE_FILTER_ID (int): A filter function identifier used in the main function.
 """
 from PIL import Image
 import sys
 import os
 
-#A filter function identifier used in the main function
 BLACK_WHITE_FILTER_ID = '0'
 
-# Coefficients used to calculate the luminance of a color channel.
-# Based from the ITU BT.709 standard
 LUMA_RED   = 0.2126
 LUMA_GREEN = 0.7152
 LUMA_BLUE  = 0.0722
 
-# The threshold determing if a pixel should be black or white based from the lumanince
 LUMA_THRESHOLD = 150
 
 def apply_black_white_filter(image):
     """Converts an image into black and white based from its lumanince.
 
-    Currently only supports RGB image modes.
-    
     Args:
-        image (Image): An open Image instance.
+        image (PIL.Image): An open Image object.
 
     Returns:
-        bool: True if the image is converted, false otherwise.
+        bool -- if the filter could be applied.
+
     """
+
     if not image or image.mode != 'RGB':
         return False
 
@@ -52,21 +60,19 @@ def apply_black_white_filter(image):
     return True
 
 def main(argv):
-    """The function called when kernel_counter.py is ran.
+    """The function called when filters.py is ran.
 
     Converts an image into a black and white format and saves the file
     to the debug folder as black_white_test.jgp. This allows personal testing
     of any filters without affecting any other files.
     The argv needs a image path, output file name, and a filer number.
 
-    Example:
-        python3 kernel_counter.py /path/to/image.jpg test1.jpg 1
-
     Args:
         argv (list): The sys.argv list.
 
     Returns:
-        bool: True if the image was saved, False if it was not. 
+        bool: True if the image was saved, False if it was not.
+
     """
     if len(argv) == 4:
         file_path     = argv[1]
