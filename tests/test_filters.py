@@ -5,7 +5,7 @@ sys.path.append("..") #Add top level directory to python path for imports
 from corn_app import filters
 from PIL import Image
 
-class TestKernelCounter(unittest.TestCase):
+class TestFilters(unittest.TestCase):
     """ Tests filters.py functions
     """
     def test_apply_black_white_filter(self):
