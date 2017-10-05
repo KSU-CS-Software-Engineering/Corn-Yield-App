@@ -12,7 +12,7 @@ Attributes:
         ITU BT.709 standard.
     LUMA_THRESHOLD (float): The threshold determing if a pixel should be black or white based\
         from the lumanince.
-    BLACK_WHITE_FILTER_ID (int): A filter function identifier used in the main function.
+    BLACK_WHITE_FILTER_ID (str): A filter function identifier used in the main function.
 """
 from PIL import Image
 import sys
