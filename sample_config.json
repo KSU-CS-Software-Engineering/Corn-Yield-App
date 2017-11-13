@@ -1,4 +1,6 @@
 {
     "trainingCornDir": "Enter path to directory",
-    "testingCornDir" : "Enter path to directory"
+    "testingCornDir" : "Enter path to directory",
+    "cornPhotoDir": "Enter path to directory",
+    "contourPhotoDir":  "Enter path to directory"
 }
