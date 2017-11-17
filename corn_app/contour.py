@@ -1,5 +1,4 @@
 """Finds the contours of kernels on the ears of corn
-
 Attributes:
     CONTOUR_COLOR (tuple): RGB color value used to draw the contours
     BLOCK_SIZE (int): The pixel size of the square to find a threshold for
@@ -19,10 +18,8 @@ LINE_WIDTH = 5
 
 def find_contours(image):
     """Finds the contours of kernels on the ears of corn
-
     Args:
         image (openCV Image): An open Image object.
-
     Returns:
         Image -- An image with the contours drawn in
     """
