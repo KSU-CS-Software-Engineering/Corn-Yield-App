@@ -34,7 +34,5 @@ def mask_yellow(image):
 
 	hsv_yellow_image = cv2.bitwise_and(image, image, mask = yellow_mask)
 	bgr_yellow_image = cv2.cvtColor(hsv_yellow_image, cv2.COLOR_HSV2BGR)
-	cv2.imwrite("../tests/images/bgr.jpg", bgr_yellow_image)
-	cv2.imwrite("../tests/images/hsv.jpg", hsv_yellow_image)
 
 	return bgr_yellow_image
