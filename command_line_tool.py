@@ -1,6 +1,7 @@
+from corn_app import contour
+from corn_app import mask
 import argparse
-import corn_app.contour
-import corn_app.mask
+import collections
 import os
 import cv2
 import json
@@ -14,28 +15,36 @@ def apply_mask():
     for file in os.listdir(photo_dir):
         if file.endswith('.JPG'):
             image = cv2.imread(os.path.join(photo_dir, file))
-            masked_image = corn_app.mask.mask_yellow(image)
+
+            print(f'Masking image {file}')
+            masked_image = mask.mask_yellow(image)
+
             os.chdir(output_dir)
             cv2.imwrite('mask_' + file, masked_image)
-
 
 def apply_contours():
     for file in os.listdir(photo_dir):
         if file.endswith('.JPG'):
             image = cv2.imread(os.path.join(photo_dir, file))
-            contoured_image = corn_app.contour.find_contours(image)
+
+            print(f'Contouring image {file}')
+            contoured_image = contour.find_contours(mask.mask_yellow(image))
+
             os.chdir(output_dir)
             cv2.imwrite('contours_' + file, contoured_image)
-
 
 def process():
     for file in os.listdir(photo_dir):
         if file.endswith('.JPG'):
             image = cv2.imread(os.path.join(photo_dir, file))
-            contoured_image = corn_app.contour.find_contours(corn_app.mask.mask_yellow(image))
-            os.chdir(output_dir)
-            cv2.imwrite('processed_' + file, contoured_image)
 
+            print(f'Counting image {file}')
+            contoured_image = contour.find_contours(mask.mask_yellow(image))
+            count_results   = contour.count_kernels(contoured_image, contour.OTSU_METHOD)
+            print(f'Visible kernels counted: {count_results.count}')
+
+            os.chdir(output_dir)
+            cv2.imwrite('processed_' + file, count_results.image)
 
 def main(args):
     if args.mask is True:
