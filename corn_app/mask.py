@@ -18,7 +18,7 @@ def mask_yellow(image):
         image (openCV Image): An open Image object.
 
     Returns:
-        bgr_yellow_image (openCV Image): An Image with yellow pixels extracted
+        yellow_image (openCV Image): A BGR Image with yellow pixels extracted
     """
 
     if image is None:
@@ -31,8 +31,8 @@ def mask_yellow(image):
     upper_yellow = np.array(UPPER_BOUND_YELLOW)
 
     yellow_mask = cv2.inRange(blur, lower_yellow, upper_yellow)
+    kernel = np.ones((12,4), np.uint8)
+    erosion = cv2.erode(yellow_mask, kernel, iterations = 1)
+    yellow_image = cv2.bitwise_and(image, image, mask = erosion)
 
-    hsv_yellow_image = cv2.bitwise_and(image, image, mask = yellow_mask)
-    bgr_yellow_image = cv2.cvtColor(hsv_yellow_image, cv2.COLOR_HSV2BGR)
-
-    return bgr_yellow_image
+    return yellow_image
