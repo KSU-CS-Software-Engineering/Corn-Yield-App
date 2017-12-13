@@ -11,6 +11,12 @@ json_data = ""
 photo_dir = ""
 output_dir = ""
 
+# The keys are valid inputs for the count_method argument
+METHODS_DICT = {
+    'watershed': contour.WATERSHED_METHOD,
+    'otsu': contour.OTSU_METHOD
+}
+
 SUPPORTED_EXTS = ('.JPG', 'jpg')
 
 def apply_mask():
@@ -39,18 +45,19 @@ def apply_contours():
         else:
             print(f'{file} is not a supported image format')
 
-def process():
+def process(counting_method):
     for file in os.listdir(photo_dir):
         if file.endswith(SUPPORTED_EXTS):
             image = cv2.imread(os.path.join(photo_dir, file))
 
             print(f'Counting image {file}')
             contoured_image = contour.find_contours(mask.mask_yellow(image))
-            count_results   = contour.count_kernels(contoured_image, contour.OTSU_METHOD)
+            count_results   = contour.count_kernels(contoured_image, METHODS_DICT[counting_method])
             print(f'Visible kernels counted: {count_results.count}')
 
             os.chdir(output_dir)
-            cv2.imwrite('processed_' + file, count_results.image)
+            # Prepend to the file the counting method used
+            cv2.imwrite(f'{counting_method}_{file}', count_results.image)
         else:
             print(f'{file} is not a supported image format')
 
@@ -64,11 +71,15 @@ def main(args):
         exit(0)
 
     if args.process is True:
-        process()
+        if args.count_method in METHODS_DICT:
+            process(args.count_method)
+        else:
+            print(f'"{args.count_method}" is an invalid counting method. Try -h or --help for valid counting methods')
         exit(0)
 
 
 parser = argparse.ArgumentParser(description='Applies a mask and contours to pictures of corn.', prog='Corn Kernel Counter Prep Application')
+parser.add_argument('count_method', help='Choose the counting method for the kernels: "watershed" or "otsu"')
 parser.add_argument('--version', action='version', version='Version 0.1.0')
 parser.add_argument('-m', '--mask', action='store_true', default=False, help='Applies a mask to the corn images.')
 parser.add_argument('-c', '--contour', action='store_true', default=False, help='Draws contours on the corn images.')
