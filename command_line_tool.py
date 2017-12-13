@@ -11,9 +11,11 @@ json_data = ""
 photo_dir = ""
 output_dir = ""
 
+SUPPORTED_EXTS = ('.JPG', 'jpg')
+
 def apply_mask():
     for file in os.listdir(photo_dir):
-        if file.endswith('.JPG'):
+        if file.endswith(SUPPORTED_EXTS):
             image = cv2.imread(os.path.join(photo_dir, file))
 
             print(f'Masking image {file}')
@@ -21,10 +23,12 @@ def apply_mask():
 
             os.chdir(output_dir)
             cv2.imwrite('mask_' + file, masked_image)
+        else:
+            print(f'{file} is not a supported image format')
 
 def apply_contours():
     for file in os.listdir(photo_dir):
-        if file.endswith('.JPG'):
+        if file.endswith(SUPPORTED_EXTS):
             image = cv2.imread(os.path.join(photo_dir, file))
 
             print(f'Contouring image {file}')
@@ -32,10 +36,12 @@ def apply_contours():
 
             os.chdir(output_dir)
             cv2.imwrite('contours_' + file, contoured_image)
+        else:
+            print(f'{file} is not a supported image format')
 
 def process():
     for file in os.listdir(photo_dir):
-        if file.endswith('.JPG'):
+        if file.endswith(SUPPORTED_EXTS):
             image = cv2.imread(os.path.join(photo_dir, file))
 
             print(f'Counting image {file}')
@@ -45,6 +51,8 @@ def process():
 
             os.chdir(output_dir)
             cv2.imwrite('processed_' + file, count_results.image)
+        else:
+            print(f'{file} is not a supported image format')
 
 def main(args):
     if args.mask is True:
