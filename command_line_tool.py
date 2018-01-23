@@ -1,11 +1,13 @@
 from corn_app import contour
 from corn_app import mask
+from corn_app import csv_features
 import argparse
 import collections
 import os
 import cv2
 import json
 import sys
+import csv
 
 json_data = ""
 photo_dir = ""
@@ -46,20 +48,26 @@ def apply_contours():
             print(f'{file} is not a supported image format')
 
 def process(counting_method):
-    for file in os.listdir(photo_dir):
-        if file.endswith(SUPPORTED_EXTS):
-            image = cv2.imread(os.path.join(photo_dir, file))
+    # Open csv file that the features will be written to
+    with open(csv_features.FILENAME, 'w') as csvfile:
+        feature_writer = csv.writer(csvfile, delimiter=csv_features.DELIM, quotechar=csv_features.QUOTECHAR, quoting=csv.QUOTE_MINIMAL)
+        feature_writer.writerow(csv_features.HEADER)
 
-            print(f'Counting image {file}')
-            contoured_image = contour.find_contours(mask.mask_yellow(image))
-            count_results   = contour.count_kernels(contoured_image, METHODS_DICT[counting_method])
-            print(f'Visible kernels counted: {count_results.count}')
+        for file in os.listdir(photo_dir):
+            if file.endswith(SUPPORTED_EXTS):
+                image = cv2.imread(os.path.join(photo_dir, file))
 
-            os.chdir(output_dir)
-            # Prepend to the file the counting method used
-            cv2.imwrite(f'{counting_method}_{file}', count_results.image)
-        else:
-            print(f'{file} is not a supported image format')
+                print(f'Counting image {file}')
+                contoured_image = contour.find_contours(mask.mask_yellow(image))
+                count_results   = contour.count_kernels(contoured_image, METHODS_DICT[counting_method])
+                print(f'Visible kernels counted: {count_results.count}')
+                feature_writer.writerow([file, count_results.count])
+
+                os.chdir(output_dir)
+                # Prepend to the file the counting method used
+                cv2.imwrite(f'{counting_method}_{file}', count_results.image)
+            else:
+                print(f'{file} is not a supported image format')
 
 def main(args):
     if args.mask is True:
