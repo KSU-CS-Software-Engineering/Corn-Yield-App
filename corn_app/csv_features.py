@@ -7,6 +7,6 @@ Attributes:
 """
 
 FILENAME  = 'calculated_features.csv'
-HEADER    = ['image filename', 'front facing kernel count']
+HEADER    = ['image filename', 'front facing kernel count', "avg width/height ratio"]
 DELIM     = '|'
 QUOTECHAR = '/'
