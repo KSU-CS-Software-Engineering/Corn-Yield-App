@@ -24,6 +24,21 @@ MODEL_NAME = config['trainingCornDir'] + '/kernel_prediction_model'
 DATA_FILE = config['features_file']
 DELIMITER = ','
 
+#expects float as param
+def get_count(front_count):
+
+	saver = tf.train.import_meta_graph(MODEL_NAME + '-' + str(ITERATIONS) + '.meta')
+
+	with tf.Session() as session:
+		saver.restore(session, tf.train.latest_checkpoint(config['trainingCornDir']))
+		print('model restored')
+		bias = session.run(BIAS)
+		weight = session.run(WEIGHT)
+		full_count = weight * np.array(front_count) + bias
+
+		#Todo: train again with new values
+		return full_count
+
 def train():
 
 	# get data from csv file
