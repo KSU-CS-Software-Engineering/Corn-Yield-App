@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import json
+import os
+import csv
 
 LEARNING_RATE = 0.00001
 ITERATIONS = 1000
@@ -38,6 +40,54 @@ def get_count(front_count):
 
 		#Todo: train again with new values
 		return full_count
+
+def create_data():
+
+	full_count_file = open(config['fullCount_file'], 'r')
+	front_count_file = open(config['frontCount_file'], 'r')
+	data_file = open(config['features_file'], 'w')
+	image_names = sorted(os.listdir(config['cornPhotoDir']))
+
+	data_writer = csv.writer(data_file, delimiter=',', quotechar='/', quoting=csv.QUOTE_MINIMAL)
+	front_reader = csv.reader(front_count_file, delimiter='|', quotechar='/', quoting=csv.QUOTE_MINIMAL)
+	full_reader = csv.reader(full_count_file, delimiter=',', quotechar='/', quoting=csv.QUOTE_MINIMAL)
+
+	print(front_reader)
+
+	next(front_reader)
+
+	front_row = next(front_reader)
+
+	next(full_reader)
+	full_row = next(full_reader)
+
+	for file in image_names:
+		corn_number = int(file.split('_')[0])
+		# front_row = next(front_reader)
+		# full_row = next(full_reader)
+		# print(front_row)
+		# print(full_row)
+
+		corn_number_check = int(front_row[0].split('_')[0])
+
+		while(corn_number != corn_number_check):
+			print(corn_number, front_row)
+
+			front_row = next(front_reader)
+			corn_number_check = int(front_row[0].split('_')[0])
+
+		front_count = int(front_row[1])
+
+		corn_number_check = int(full_row[0])
+		while(corn_number != corn_number_check):
+			print(corn_number, full_row)
+			full_row = next(full_reader)
+			corn_number_check = int(full_row[0].split('_')[0])
+
+		full_count = int(full_row[3])
+
+		data_writer.writerow([front_count, full_count])
+
 
 def train():
 
