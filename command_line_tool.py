@@ -1,6 +1,7 @@
 from corn_app import contour
 from corn_app import mask
 from corn_app import csv_features
+from corn_app import trainer
 import argparse
 import collections
 import os
@@ -8,6 +9,7 @@ import cv2
 import json
 import sys
 import csv
+import re
 
 json_data = ""
 photo_dir = ""
@@ -20,6 +22,14 @@ METHODS_DICT = {
 }
 
 SUPPORTED_EXTS = ('.JPG', 'jpg')
+
+"""
+Used to sort filenames numerically without leading zeros
+"""
+def natural_sort(l): 
+    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+    return sorted(l, key = alphanum_key)
 
 def apply_mask():
     for file in os.listdir(photo_dir):
@@ -53,7 +63,10 @@ def process(counting_method):
         feature_writer = csv.writer(csvfile, delimiter=csv_features.DELIM, quotechar=csv_features.QUOTECHAR, quoting=csv.QUOTE_MINIMAL)
         feature_writer.writerow(csv_features.HEADER)
 
-        for file in os.listdir(photo_dir):
+        # Process ears from lowest corn id to highest
+        sorted_photos = natural_sort(os.listdir(photo_dir))
+
+        for file in sorted_photos:
             if file.endswith(SUPPORTED_EXTS):
                 image = cv2.imread(os.path.join(photo_dir, file))
 
@@ -85,6 +98,12 @@ def main(args):
             print(f'"{args.count_method}" is an invalid counting method. Try -h or --help for valid counting methods')
         exit(0)
 
+    if args.data is True:
+        trainer.generate_training_set()
+        exit(0)
+
+
+
 
 parser = argparse.ArgumentParser(description='Applies a mask and contours to pictures of corn.', prog='Corn Kernel Counter Prep Application')
 parser.add_argument('count_method', help='Choose the counting method for the kernels: "watershed" or "otsu"')
@@ -92,6 +111,7 @@ parser.add_argument('--version', action='version', version='Version 0.1.0')
 parser.add_argument('-m', '--mask', action='store_true', default=False, help='Applies a mask to the corn images.')
 parser.add_argument('-c', '--contour', action='store_true', default=False, help='Draws contours on the corn images.')
 parser.add_argument('-p', '--process', action='store_true', default=False, help='Applies a mask then draws the contours on a masked image.')
+parser.add_argument('-d', '--data', action='store_true', default=False, help='Creates the data.csv file for training.')
 args = parser.parse_args()
 
 try:
