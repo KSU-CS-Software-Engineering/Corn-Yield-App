@@ -3,6 +3,7 @@ import tensorflow as tf
 import json
 import os
 import csv
+from corn_app import csv_features
 
 LEARNING_RATE = 0.00001
 ITERATIONS = 1000
@@ -19,11 +20,10 @@ TRAINING_MODEL = tf.add(tf.multiply(WEIGHT, FRONT_KERNEL_COUNT), BIAS)
 ERROR = tf.reduce_mean(tf.square(TRAINING_MODEL - FULL_KERNEL_COUNT))
 TRAINER = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(ERROR)
 
-config = json.load(open('../config.json'))
+config = json.load(open('config.json'))
 SAVER = tf.train.Saver()
 MODEL_NAME = config['trainingCornDir'] + '/kernel_prediction_model'
 
-DATA_FILE = config['features_file']
 DELIMITER = ','
 
 #expects float as param
@@ -41,53 +41,72 @@ def get_count(front_count):
         #Todo: train again with new values
         return full_count
 
-def create_data():
+def generate_training_set():
+    """Place's each corn photo's features and final kernel count on a row
+        in dataset.csv
 
-    full_count_file = open(config['fullCount_file'], 'r')
-    front_count_file = open(config['frontCount_file'], 'r')
-    data_file = open(config['features_file'], 'w')
-    image_names = sorted(os.listdir(config['cornPhotoDir']))
+    Args:
+        None
+    Returns:
+        None
+    """
 
-    data_writer = csv.writer(data_file, delimiter=',', quotechar='/', quoting=csv.QUOTE_MINIMAL)
-    front_reader = csv.reader(front_count_file, delimiter='|', quotechar='/', quoting=csv.QUOTE_MINIMAL)
-    full_reader = csv.reader(full_count_file, delimiter=',', quotechar='/', quoting=csv.QUOTE_MINIMAL)
+    feature_file     = open(csv_features.FILENAME, 'r')
+    total_count_file = open('csv/total_kernel_counts.csv', 'r')
+    data_file        = open('csv/dataset.csv', 'w+')
 
-    print(front_reader)
+    feature_reader     = csv.reader(feature_file, delimiter='|', quotechar='/', quoting=csv.QUOTE_MINIMAL)
+    total_count_reader = csv.reader(total_count_file , delimiter=',', quotechar='/', quoting=csv.QUOTE_MINIMAL)
+    data_writer        = csv.writer(data_file,    delimiter=',', quotechar='/', quoting=csv.QUOTE_MINIMAL)
+    
+    # Call next() to skip past header row.
+    next(feature_reader)
+    next(total_count_reader)
 
-    next(front_reader)
+    # Get first data row of csv file.
+    feature_row     = next(feature_reader)
+    total_count_row = next(total_count_reader)
 
-    front_row = next(front_reader)
+    feature_file_end_reached = False;
 
-    next(full_reader)
-    full_row = next(full_reader)
+    while not feature_file_end_reached:
+        # Get leading integer of file name. e.i '1-batch1 copy.JPG'
+        corn_feature_id = int(feature_row[0].split('-')[0])
+        corn_total_id   = int(total_count_row[0])
 
-    for file in image_names:
-        corn_number = int(file.split('_')[0])
-        # front_row = next(front_reader)
-        # full_row = next(full_reader)
-        # print(front_row)
-        # print(full_row)
+        # Seek the absolute reader to the current corn feature id
+        while corn_total_id < corn_feature_id:
+            try:
+                total_count_row = next(total_count_reader)
+                corn_total_id   = int(total_count_row[0])
+            except StopIteration: 
+                # Consumed all rows in the absolute_features.csv file.
+                # This means we're training a corn id we do not have a final count
+                # for. The program will be terminated.
+                print(f"Final kernel count does not exist for corn ID: {corn_feature_id}.")
+                print("Training will now terminate.")
+                feature_file.close()
+                total_count_file.close()
+                data_file.close()
+                exit(0)
 
-        corn_number_check = int(front_row[0].split('_')[0])
+        # Extract features and the full kernel count from the csv files.
+        front_count = int(feature_row[1])
+        full_count  = int(total_count_row[3])
 
-        while(corn_number != corn_number_check):
-            print(corn_number, front_row)
-
-            front_row = next(front_reader)
-            corn_number_check = int(front_row[0].split('_')[0])
-
-        front_count = int(front_row[1])
-
-        corn_number_check = int(full_row[0])
-        while(corn_number != corn_number_check):
-            print(corn_number, full_row)
-            full_row = next(full_reader)
-            corn_number_check = int(full_row[0].split('_')[0])
-
-        full_count = int(full_row[3])
-
+        # Write the features and full kernel count to the data file.
         data_writer.writerow([front_count, full_count])
 
+        try:
+            # Repeat process for the next image in feature_reader.
+            feature_row = next(feature_reader)
+        except:
+            # Reached the end of the feature file, stop iteration.
+            feature_file_end_reached = True
+
+    feature_file.close()
+    total_count_file.close()
+    data_file.close()
 
 def train():
 
@@ -126,6 +145,9 @@ def train():
         print("After {0} iterations,\n  WEIGHT: {1}, BIAS: {2}, ERROR: {3}".format(ITERATIONS, final_weight, final_bias, final_error))
 
         SAVER.save(session, MODEL_NAME, global_step=ITERATIONS)
+
+def main():
+    create_data()
 
 if __name__ == "__main__":
     main()
