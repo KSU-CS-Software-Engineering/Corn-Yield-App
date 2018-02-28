@@ -59,14 +59,19 @@ def process(counting_method):
                 image = cv2.imread(os.path.join(photo_dir, file))
 
                 print(f'Counting image {file}')
+
+                # Countour the image.
                 contour_results = contour.find_contours(mask.mask_yellow(image))
                 contoured_image = contour_results.image
+
+                # Count the front facing kernels.
                 count_results   = contour.count_kernels(contoured_image, METHODS_DICT[counting_method])
                 print(f'Visible kernels counted: {count_results.count}')
-                feature_writer.writerow([file, count_results.count, contour_results.avg_w_h_ratio])
 
+                feature_writer.writerow([file, count_results.count, contour_results.avg_w_h_ratio])
                 os.chdir(output_dir)
-                # Prepend to the file the counting method used
+
+                # Prepend to the file the counting method used for testing purposes.
                 cv2.imwrite(f'{counting_method}_{file}', count_results.image)
             else:
                 print(f'{file} is not a supported image format')

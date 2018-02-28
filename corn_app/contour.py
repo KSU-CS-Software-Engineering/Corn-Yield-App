@@ -41,21 +41,18 @@ def find_contours(image):
             cv2.THRESH_BINARY,BLOCK_SIZE,0)
     im2, contours, hierarchy = cv2.findContours(thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # width height ratio of all contours
+    # Width height ratio of all contours
     w_h_ratio = 0;
 
+    # Sum the width height ratio of all contours while drawing them.
     for (i, c) in enumerate(contours):
         x,y,w,h = cv2.boundingRect(c)
-        rect = cv2.minAreaRect(c)
         w_h_ratio += ( w / h )
-        #cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
         cv2.drawContours(image, [c], -1, CONTOUR_COLOR, LINE_WIDTH)
 
     # pack the result image and count into a named tuple
     contour_tuple  = collections.namedtuple('contour_tuple','image avg_w_h_ratio')
     contour_result = contour_tuple(image=image, avg_w_h_ratio=w_h_ratio / len(contours) )
-
-    #cv2.drawContours(image, contours, -1, CONTOUR_COLOR, LINE_WIDTH)
 
     return contour_result
 
