@@ -1,0 +1,4 @@
+# git will only see the .gitignore file.
+*
+*/
+!.gitignore

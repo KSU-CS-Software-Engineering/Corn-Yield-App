@@ -40,9 +40,21 @@ def find_contours(image):
     thres = cv2.adaptiveThreshold(imgray, GREY_SCALE_WHITE, cv2.ADAPTIVE_THRESH_MEAN_C,\
             cv2.THRESH_BINARY,BLOCK_SIZE,0)
     im2, contours, hierarchy = cv2.findContours(thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(image, contours, -1, CONTOUR_COLOR, LINE_WIDTH)
 
-    return image
+    # Width height ratio of all contours
+    w_h_ratio = 0;
+
+    # Sum the width height ratio of all contours while drawing them.
+    for (i, c) in enumerate(contours):
+        x,y,w,h = cv2.boundingRect(c)
+        w_h_ratio += ( w / h )
+        cv2.drawContours(image, [c], -1, CONTOUR_COLOR, LINE_WIDTH)
+
+    # pack the result image and count into a named tuple
+    contour_tuple  = collections.namedtuple('contour_tuple','image avg_w_h_ratio')
+    contour_result = contour_tuple(image=image, avg_w_h_ratio=w_h_ratio / len(contours) )
+
+    return contour_result
 
 def watershed_method(image):
     """Counts the kernels from a masked, contoured image of corn using
@@ -163,3 +175,12 @@ def count_kernels(image, method_number):
         return COUNTING_METHODS[method_number](image)
     else:
         raise ValueError('Argument method_number is not within range')
+
+
+
+
+
+
+
+
+

@@ -1,9 +1,12 @@
+from corn_app import csv_features
 import numpy as np
 import tensorflow as tf
 import json
 import os
 import csv
-import csv_features
+
+
+MODELS_DIR = 'models'
 
 LEARNING_RATE = 0.00001
 ITERATIONS = 1000
@@ -13,12 +16,12 @@ X = 0
 Y = 1
 
 FRONT_KERNEL_COUNT = tf.placeholder(tf.float32)
-FULL_KERNEL_COUNT = tf.placeholder(tf.float32)
-WEIGHT = tf.Variable(tf.random_normal([1]))
-BIAS = tf.Variable(tf.random_normal([1]))
-TRAINING_MODEL = tf.add(tf.multiply(WEIGHT, FRONT_KERNEL_COUNT), BIAS)
-ERROR = tf.reduce_mean(tf.square(TRAINING_MODEL - FULL_KERNEL_COUNT))
-TRAINER = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(ERROR)
+FULL_KERNEL_COUNT  = tf.placeholder(tf.float32)
+WEIGHT             = tf.Variable(tf.random_normal([1]))
+BIAS               = tf.Variable(tf.random_normal([1]))
+TRAINING_MODEL     = tf.add(tf.multiply(WEIGHT, FRONT_KERNEL_COUNT), BIAS)
+ERROR              = tf.reduce_mean(tf.square(TRAINING_MODEL - FULL_KERNEL_COUNT))
+TRAINER            = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(ERROR)
 
 SAVER = tf.train.Saver()
 
@@ -36,20 +39,19 @@ def get_count(front_count):
         full_count(float): This is the predicted full kernel count calculated by our last trained model
     """
 
-    models_dir = '../models'
-    last_training_dir = f'{len(os.listdir(models_dir))}'
+    last_training_dir = f'{len(os.listdir(MODELS_DIR))}'
     model_name = f'kernel_prediction_model-{ITERATIONS}.meta'
 
-    saver = tf.train.import_meta_graph(os.path.join(models_dir, last_training_dir, model_name))
+    saver = tf.train.import_meta_graph(os.path.join(MODELS_DIR, last_training_dir, model_name))
 
     with tf.Session() as session:
         print('Restoring last training model...\n')
-        saver.restore(session, tf.train.latest_checkpoint(os.path.join(models_dir, last_training_dir)))
+        saver.restore(session, tf.train.latest_checkpoint(os.path.join(MODELS_DIR, last_training_dir)))
         print('Last training model restored...\n')
 
         print('Calculating full kernel count...\n')
-        bias = session.run(BIAS)
-        weight = session.run(WEIGHT)
+        bias       = session.run(BIAS)
+        weight     = session.run(WEIGHT)
         full_count = weight * front_count + bias
 
         print(f'The predicted full kernel count is : {full_count}\n')
@@ -57,9 +59,9 @@ def get_count(front_count):
         print('Training model with new values...\n')
 
         session.run(TRAINER, feed_dict={FRONT_KERNEL_COUNT: front_count, FULL_KERNEL_COUNT: full_count})
-        final_error = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: front_count, FULL_KERNEL_COUNT: full_count})
+        final_error  = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: front_count, FULL_KERNEL_COUNT: full_count})
         final_weight = session.run(WEIGHT)
-        final_bias = session.run(BIAS)
+        final_bias   = session.run(BIAS)
 
         print("Training Finished!\n")
         print(f"WEIGHT: {final_weight}, BIAS: {final_bias}, ERROR: {final_error}")
@@ -145,7 +147,7 @@ def train():
     '''
 
     # get data pairs from csv file
-    data_points = np.genfromtxt('../csv/dataset.csv', delimiter=',')
+    data_points = np.genfromtxt('csv/dataset.csv', delimiter=',')
 
     #will be run later to initialize tensorflow variables
     init = tf.global_variables_initializer()
@@ -166,32 +168,29 @@ def train():
                 session.run(TRAINER, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
 
             if number_of_runs % DISPLAY_INTERVAL == 0:
-                current_error = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
+                current_error  = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
                 current_weight = session.run(WEIGHT)
-                current_bias = session.run(BIAS)
+                current_bias   = session.run(BIAS)
                 print(f"ITERATION: {number_of_runs}, WEIGHT: {current_weight}, BIAS: {current_bias}, ERROR: {current_error}")
 
         print("\nTraining Finished!")
 
-        final_error = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
+        final_error  = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
         final_weight = session.run(WEIGHT)
-        final_bias = session.run(BIAS)
+        final_bias   = session.run(BIAS)
 
         print(f"After {ITERATIONS} iterations,\n  WEIGHT: {final_weight}, BIAS: {final_bias}, ERROR: {final_error}")
 
         print("Saving trained model...")
 
-        #create folder in the models directory
-        models_dir = '../models'
-        os.chdir(models_dir)
-
-        dir_count          = len(os.listdir(models_dir))
+        # Make folder is MODELS_DIR
+        dir_count          = len(os.listdir(MODELS_DIR))
         current_model_dir  = dir_count + 1 #saving dir name as number. Will be using last trained model to get a full count
         model_name         = 'kernel_prediction_model'
 
-        os.makedirs(f'{current_model_dir}')
+        os.makedirs(f'models/{current_model_dir}')
 
-        SAVER.save(session, os.path.join(models_dir, f'{current_model_dir}', model_name), global_step=ITERATIONS)
+        SAVER.save(session, os.path.join(MODELS_DIR, f'{current_model_dir}', model_name), global_step=ITERATIONS)
 
         print("Trained model has been saved.")
 

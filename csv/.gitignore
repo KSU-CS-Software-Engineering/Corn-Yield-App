@@ -1,0 +1,5 @@
+# .git will only see the .gitignore file and total_kernel_counts.csv.
+*
+*/
+!.gitignore
+!.total_kernel_counts.csv
