@@ -6,7 +6,7 @@ Attributes:
     QUOTECHAR (str): Character used for quotation marks
 """
 
-FILENAME  = 'calculated_features.csv'
+FILENAME  = 'csv/features.csv'
 HEADER    = ['image filename', 'front facing kernel count', "avg width/height ratio"]
 DELIM     = '|'
 QUOTECHAR = '/'
