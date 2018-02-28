@@ -26,9 +26,9 @@ SUPPORTED_EXTS = ('.JPG', 'jpg')
 """
 Used to sort filenames numerically without leading zeros
 """
-def natural_sort(l): 
-    convert = lambda text: int(text) if text.isdigit() else text.lower() 
-    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+def natural_sort(l):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(l, key = alphanum_key)
 
 def apply_mask():
@@ -102,8 +102,9 @@ def main(args):
         trainer.generate_training_set()
         exit(0)
 
-
-
+    if args.train is True:
+        trainer.train()
+        exit(0)
 
 parser = argparse.ArgumentParser(description='Applies a mask and contours to pictures of corn.', prog='Corn Kernel Counter Prep Application')
 parser.add_argument('count_method', help='Choose the counting method for the kernels: "watershed" or "otsu"')
@@ -112,6 +113,7 @@ parser.add_argument('-m', '--mask', action='store_true', default=False, help='Ap
 parser.add_argument('-c', '--contour', action='store_true', default=False, help='Draws contours on the corn images.')
 parser.add_argument('-p', '--process', action='store_true', default=False, help='Applies a mask then draws the contours on a masked image.')
 parser.add_argument('-d', '--data', action='store_true', default=False, help='Creates the data.csv file for training.')
+parser.add_argument('-t', '--train', action='store_true', default=False, help='Trains model from dataset.csv file')
 args = parser.parse_args()
 
 try:
