@@ -7,66 +7,40 @@ import csv
 
 
 MODELS_DIR = 'models'
-
-LEARNING_RATE = 0.00001
 ITERATIONS = 1000
-DISPLAY_INTERVAL = 50
-
-X = 0
-Y = 1
-
-FRONT_KERNEL_COUNT = tf.placeholder(tf.float32)
-FULL_KERNEL_COUNT  = tf.placeholder(tf.float32)
-WEIGHT             = tf.Variable(tf.random_normal([1]))
-BIAS               = tf.Variable(tf.random_normal([1]))
-TRAINING_MODEL     = tf.add(tf.multiply(WEIGHT, FRONT_KERNEL_COUNT), BIAS)
-ERROR              = tf.reduce_mean(tf.square(TRAINING_MODEL - FULL_KERNEL_COUNT))
-TRAINER            = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(ERROR)
-
-SAVER = tf.train.Saver()
-
-
+N          = 2   # Number of features.
 
 #expects float as param
-def get_count(front_count):
+def get_count(front_count, ratio):
     """
     Uses last trained model to predict the full kernel count
 
     Args:
-        front_count(float): This is the count determined by the watershed/otsu method in the contours module
+        front_count(int): This is the count determined by the watershed/otsu method in the contours module
+        ratio(float)    : 
 
     Returns:
-        full_count(float): This is the predicted full kernel count calculated by our last trained model
+        full_count(int): This is the predicted full kernel count calculated by our last trained model
     """
-
     last_training_dir = f'{len(os.listdir(MODELS_DIR))}'
-    model_name = f'kernel_prediction_model-{ITERATIONS}.meta'
+    model_name        = f'kernel_prediction_model-{ITERATIONS}.meta'
 
     saver = tf.train.import_meta_graph(os.path.join(MODELS_DIR, last_training_dir, model_name))
 
     with tf.Session() as session:
-        print('Restoring last training model...\n')
+        # Load last training module
         saver.restore(session, tf.train.latest_checkpoint(os.path.join(MODELS_DIR, last_training_dir)))
-        print('Last training model restored...\n')
 
-        print('Calculating full kernel count...\n')
-        bias       = session.run(BIAS)
-        weight     = session.run(WEIGHT)
-        full_count = weight * front_count + bias
+        x  = tf.placeholder(tf.float32,[None,N])
+        W  = session.run("W:0")   # Load weights.
+        b  = session.run("b:0")   # Load basis.
+        y  = tf.matmul(x, W) + b  # Machine learning model.
 
-        print(f'The predicted full kernel count is : {full_count}\n')
+        # Generate full count.
+        feed = {x: [[front_count, ratio]]}
+        full_count = session.run(y, feed_dict=feed)
+        full_count = int(full_count[0][0])
 
-        print('Training model with new values...\n')
-
-        session.run(TRAINER, feed_dict={FRONT_KERNEL_COUNT: front_count, FULL_KERNEL_COUNT: full_count})
-        final_error  = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: front_count, FULL_KERNEL_COUNT: full_count})
-        final_weight = session.run(WEIGHT)
-        final_bias   = session.run(BIAS)
-
-        print("Training Finished!\n")
-        print(f"WEIGHT: {final_weight}, BIAS: {final_bias}, ERROR: {final_error}")
-
-        #Todo: save session
         return full_count
 
 def generate_training_set():
@@ -120,10 +94,11 @@ def generate_training_set():
 
         # Extract features and the full kernel count from the csv files.
         front_count = int(feature_row[1])
+        w_h_ratio   = float(feature_row[2])
         full_count  = int(total_count_row[3])
 
         # Write the features and full kernel count to the data file.
-        data_writer.writerow([front_count, full_count])
+        data_writer.writerow([front_count, w_h_ratio, full_count])
 
         try:
             # Repeat process for the next image in feature_reader.
@@ -146,42 +121,46 @@ def train():
         None
     '''
 
-    # get data pairs from csv file
-    data_points = np.genfromtxt('csv/dataset.csv', delimiter=',')
+    data = np.genfromtxt('csv/dataset.csv', delimiter=',')
+    x  = tf.placeholder(tf.float32,[None,N])     # Placeholder for N features.
+    y_ = tf.placeholder(tf.float32, [None, 1])   # Placeholder for final kernel count.
+    W  = tf.Variable(tf.zeros([N,1]), name="W")  # Training for n weights to minimize cost function.
+    b  = tf.Variable(tf.zeros([1]),   name="b")  # Training for a b to minimize cost function.
+    y  = tf.matmul(x, W) + b                     # Machine learning model.
 
-    #will be run later to initialize tensorflow variables
+    cost          = tf.reduce_sum(tf.pow((y_ - y), 2)) # Cost function.
+    learning_rate = 0.00001                            # Size of step towards deepest gradient.
+    train_step    = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+
     init = tf.global_variables_initializer()
 
-    #every tensor flow object/function has to be run in the session for persistence
     with tf.Session() as session:
 
-        #initialize all tf variables
         session.run(init)
+        x_data = None
+        y_data = None
 
-        for current_run in range(ITERATIONS):
-
-            number_of_runs = current_run + 1
-
-            #train for each front_count => full_count pair
-            for coordinates in data_points:
-
-                session.run(TRAINER, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
-
-            if number_of_runs % DISPLAY_INTERVAL == 0:
-                current_error  = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
-                current_weight = session.run(WEIGHT)
-                current_bias   = session.run(BIAS)
-                print(f"ITERATION: {number_of_runs}, WEIGHT: {current_weight}, BIAS: {current_bias}, ERROR: {current_error}")
+        for i in range(1, ITERATIONS + 1):
+            for row in data:
+                x_data = [row[:N]]    # [ [feature 1, feature 2, feature n] ]
+                y_data = [[row[-1]]]  # [ [ final kernel count ] ]
+                feed = {x: x_data, y_: y_data}
+                session.run(train_step, feed_dict=feed)
 
         print("\nTraining Finished!")
 
-        final_error  = session.run(ERROR, feed_dict={FRONT_KERNEL_COUNT: coordinates[X], FULL_KERNEL_COUNT: coordinates[Y]})
-        final_weight = session.run(WEIGHT)
-        final_bias   = session.run(BIAS)
+        # Fetch the trained values
+        basis  = (session.run(b))
+        weight = (session.run(W))
 
-        print(f"After {ITERATIONS} iterations,\n  WEIGHT: {final_weight}, BIAS: {final_bias}, ERROR: {final_error}")
-
-        print("Saving trained model...")
+        # Display to the user the trained values.
+        print('=' * 20)
+        print(f"Front facing kernel count weight: {weight[0][0]} ")
+        print(f"Avg kernel w/h ratio weight:      {weight[1][0]} ")
+        print(f"Basis:                            {basis[0]}   ")
+        print('=' * 20)
+        
+        print("Saving trained model...\n")
 
         # Make folder is MODELS_DIR
         dir_count          = len(os.listdir(MODELS_DIR))
@@ -190,9 +169,9 @@ def train():
 
         os.makedirs(f'models/{current_model_dir}')
 
-        SAVER.save(session, os.path.join(MODELS_DIR, f'{current_model_dir}', model_name), global_step=ITERATIONS)
+        tf.train.Saver().save(session, os.path.join(MODELS_DIR, f'{current_model_dir}', model_name), global_step=ITERATIONS)
 
-        print("Trained model has been saved.")
+        print("Trained model has been saved.\n")
 
 def main():
     generate_training_set()
