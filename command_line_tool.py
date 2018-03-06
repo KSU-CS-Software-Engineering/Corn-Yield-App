@@ -113,6 +113,11 @@ def main(args):
         trainer.train()
         exit(0)
 
+    if args.full is True:
+        count = trainer.get_count(100, 1.0)
+        print(f'The predicted kernel count is: {count}\n')
+        exit(0)
+
 parser = argparse.ArgumentParser(description='Applies a mask and contours to pictures of corn.', prog='Corn Kernel Counter Prep Application')
 parser.add_argument('count_method', help='Choose the counting method for the kernels: "watershed" or "otsu"')
 parser.add_argument('--version', action='version', version='Version 0.1.0')
@@ -121,6 +126,7 @@ parser.add_argument('-c', '--contour', action='store_true', default=False, help=
 parser.add_argument('-p', '--process', action='store_true', default=False, help='Applies a mask then draws the contours on a masked image.')
 parser.add_argument('-d', '--data', action='store_true', default=False, help='Creates the data.csv file for training.')
 parser.add_argument('-t', '--train', action='store_true', default=False, help='Trains model from dataset.csv file')
+parser.add_argument('-f', '--full', action='store_true', default=False, help='prints counts')
 args = parser.parse_args()
 
 try:
