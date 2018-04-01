@@ -25,7 +25,11 @@ def get_count(front_count, ratio):
     last_training_dir = f'{len(os.listdir(MODELS_DIR))}'
     model_name        = f'kernel_prediction_model-{ITERATIONS}.meta'
 
-    saver = tf.train.import_meta_graph(os.path.join(MODELS_DIR, last_training_dir, model_name))
+    try:
+        saver = tf.train.import_meta_graph(os.path.join(MODELS_DIR, last_training_dir, model_name))
+    except Exception as e:
+        print(e)
+        exit(-1)
 
     with tf.Session() as session:
         # Load last training module
@@ -52,10 +56,13 @@ def generate_training_set():
     Returns:
         None
     """
-
-    feature_file     = open(csv_features.FILENAME, 'r')
-    total_count_file = open('csv/total_kernel_counts.csv', 'r')
-    data_file        = open('csv/dataset.csv', 'w+')
+    try:
+        feature_file     = open(csv_features.FILENAME, 'r')
+        total_count_file = open('csv/total_kernel_counts.csv', 'r')
+        data_file        = open('csv/dataset.csv', 'w+')
+    except IOError as e:
+        print(e)
+        exit(-1)
 
     feature_reader     = csv.reader(feature_file, delimiter='|', quotechar='/', quoting=csv.QUOTE_MINIMAL)
     total_count_reader = csv.reader(total_count_file , delimiter=',', quotechar='/', quoting=csv.QUOTE_MINIMAL)
@@ -90,7 +97,7 @@ def generate_training_set():
                 feature_file.close()
                 total_count_file.close()
                 data_file.close()
-                exit(0)
+                exit(-1)
 
         # Extract features and the full kernel count from the csv files.
         front_count = int(feature_row[1])
@@ -120,8 +127,13 @@ def train():
     Returns:
         None
     '''
+    try:
+        data = np.genfromtxt('csv/dataset.csv', delimiter=',')
+    except IOError as e:
+        print(e)
+        print("dataset.csv will be created after a set of images have been processed.")
+        exit(-1)
 
-    data = np.genfromtxt('csv/dataset.csv', delimiter=',')
     x  = tf.placeholder(tf.float32,[None,N])     # Placeholder for N features.
     y_ = tf.placeholder(tf.float32, [None, 1])   # Placeholder for final kernel count.
     W  = tf.Variable(tf.zeros([N,1]), name="W")  # Training for n weights to minimize cost function.
