@@ -15,7 +15,9 @@ class TestFeatures(unittest.TestCase):
 
     def test_count(self):
         os.chdir('../')
-        image_names = sorted(os.listdir('tests/images'))
+
+        # List of sorted file names excluding hidden files.
+        image_names = sorted(filter( lambda f: not f.startswith('.'), os.listdir('tests/images')))
 
         write_csv_file   = open('tests/test_calc_final_count.csv', 'w')
         total_count_file = open('csv/total_kernel_counts.csv', 'r')
