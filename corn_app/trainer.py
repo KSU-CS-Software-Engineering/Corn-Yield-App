@@ -11,7 +11,7 @@ ITERATIONS = 1000
 N          = 2   # Number of features.
 
 #expects float as param
-def get_count(front_count, ratio):
+def get_count(model_name, iterations, front_count, ratio):
     """
     Uses last trained model to predict the full kernel count
 
@@ -23,17 +23,17 @@ def get_count(front_count, ratio):
         full_count(int): This is the predicted full kernel count calculated by our last trained model
     """
     last_training_dir = f'{len(os.listdir(MODELS_DIR))}'
-    model_name        = f'kernel_prediction_model-{ITERATIONS}.meta'
+    model_file        = f'{model_name}-{iterations}.meta'
 
     try:
-        saver = tf.train.import_meta_graph(os.path.join(MODELS_DIR, last_training_dir, model_name))
+        saver = tf.train.import_meta_graph(os.path.join(MODELS_DIR, model_name, model_file))
     except Exception as e:
         print(e)
         exit(-1)
 
     with tf.Session() as session:
         # Load last training module
-        saver.restore(session, tf.train.latest_checkpoint(os.path.join(MODELS_DIR, last_training_dir)))
+        saver.restore(session, tf.train.latest_checkpoint(os.path.join(MODELS_DIR, model_name)))
 
         x  = tf.placeholder(tf.float32,[None,N])
         W  = session.run("W:0")   # Load weights.
@@ -118,7 +118,7 @@ def generate_training_set():
     total_count_file.close()
     data_file.close()
 
-def train():
+def train(model_name):
     '''
     Trains our counting model with datapoints from dataset.csv
 
@@ -127,6 +127,12 @@ def train():
     Returns:
         None
     '''
+
+    if model_name in os.listdir(MODELS_DIR):
+        print('A model already exists with that name.')
+        print('Please define a new model name.')
+        exit(-1)
+
     try:
         data = np.genfromtxt('csv/dataset.csv', delimiter=',')
     except IOError as e:
@@ -177,11 +183,11 @@ def train():
         # Make folder is MODELS_DIR
         dir_count          = len(os.listdir(MODELS_DIR))
         current_model_dir  = dir_count + 1 #saving dir name as number. Will be using last trained model to get a full count
-        model_name         = 'kernel_prediction_model'
+        ##model_name         = 'kernel_prediction_model'
 
         os.makedirs(f'models/{current_model_dir}')
 
-        tf.train.Saver().save(session, os.path.join(MODELS_DIR, f'{current_model_dir}', model_name), global_step=ITERATIONS)
+        tf.train.Saver().save(session, os.path.join(MODELS_DIR, model_name, model_name), global_step=ITERATIONS)
 
         print("Trained model has been saved.\n")
 

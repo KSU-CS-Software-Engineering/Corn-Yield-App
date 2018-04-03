@@ -110,11 +110,11 @@ def main(args):
         exit(0)
 
     if args.train is True:
-        trainer.train()
+        trainer.train('test')
         exit(0)
 
     if args.full is True:
-        count = trainer.get_count(100, 1.0)
+        count = trainer.get_count('test', 1000, 100, 1.0)
         print(f'The predicted kernel count is: {count}\n')
         exit(0)
 
