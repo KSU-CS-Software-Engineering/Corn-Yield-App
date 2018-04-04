@@ -10,6 +10,7 @@ import json
 import sys
 import csv
 import re
+import time
 
 json_data = ""
 photo_dir = ""
@@ -59,19 +60,26 @@ def apply_contours():
             print(f'{file} is not a supported image format')
 
 def process(counting_method):
-    # Open csv file that the features will be written to
+    # Open csv file that the features will be written to.
     with open(csv_features.FILENAME, 'w') as csvfile:
         feature_writer = csv.writer(csvfile, delimiter=csv_features.DELIM, quotechar=csv_features.QUOTECHAR, quoting=csv.QUOTE_MINIMAL)
         feature_writer.writerow(csv_features.HEADER)
 
-        # Process ears from lowest corn id to highest
-        sorted_photos = natural_sort(os.listdir(photo_dir))
+        # Process ears from lowest corn id to highest.
+        sorted_photos     = natural_sort(os.listdir(photo_dir))
 
+        # Gather progress data for the user.
+        file_count        = len(sorted_photos)
+        current_file_num  = 0
+        start_time        = time.time();
+
+        print('Begin processing images')
         for file in sorted_photos:
+            current_file_num += 1
             if file.endswith(SUPPORTED_EXTS):
                 image = cv2.imread(os.path.join(photo_dir, file))
 
-                print(f'Counting image {file}')
+                print('{0:30}   {1}/{2}'.format(file[0:20], current_file_num, file_count ))
 
                 # Countour the image.
                 contour_results = contour.find_contours(mask.mask_yellow(image))
@@ -79,7 +87,6 @@ def process(counting_method):
 
                 # Count the front facing kernels.
                 count_results   = contour.count_kernels(contoured_image, METHODS_DICT[counting_method])
-                print(f'Visible kernels counted: {count_results.count}')
 
                 feature_writer.writerow([file, count_results.count, contour_results.avg_w_h_ratio])
                 os.chdir(output_dir)
@@ -89,7 +96,17 @@ def process(counting_method):
             else:
                 print(f'{file} is not a supported image format')
 
+
+
+        # Display time taken for processing.
+        elapsed_time = time.time() - start_time
+        m, s = divmod(elapsed_time, 60)
+        h, m = divmod(m, 60)
+        print ("{0:d}h:{1:d}m:{2:.2f}s".format(int(h),int(m),s))
+
 def main(args):
+    # place holder model until command line implimented.
+    model = 'fullbatch'
     if args.mask is True:
         apply_mask()
         exit(0)
@@ -106,15 +123,18 @@ def main(args):
         exit(0)
 
     if args.data is True:
-        trainer.generate_training_set()
+        # Arguments are placeholders until command line is implemented
+        trainer.generate_training_set(model)
         exit(0)
 
     if args.train is True:
-        trainer.train('test')
+        # Arguments are placeholders until command line is implemented
+        trainer.train(model)
         exit(0)
 
     if args.full is True:
-        count = trainer.get_count('test', 1000, 100, 1.0)
+        # Arguments are placeholders until command line is implemented
+        count = trainer.get_count(model, 1000, 266, 1.3)
         print(f'The predicted kernel count is: {count}\n')
         exit(0)
 

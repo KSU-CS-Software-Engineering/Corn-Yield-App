@@ -47,7 +47,7 @@ def get_count(model_name, iterations, front_count, ratio):
 
         return full_count
 
-def generate_training_set():
+def generate_training_set(model_name):
     """Place's each corn photo's features and final kernel count on a row
         in dataset.csv
 
@@ -59,7 +59,7 @@ def generate_training_set():
     try:
         feature_file     = open(csv_features.FILENAME, 'r')
         total_count_file = open('csv/total_kernel_counts.csv', 'r')
-        data_file        = open('csv/dataset.csv', 'w+')
+        data_file        = open(f'csv/{model_name}_dataset.csv', 'w+')
     except IOError as e:
         print(e)
         exit(-1)
@@ -79,8 +79,8 @@ def generate_training_set():
     feature_file_end_reached = False;
 
     while not feature_file_end_reached:
-        # Get leading integer of file name. e.i '1-batch1 copy.JPG'
-        corn_feature_id = int(feature_row[0].split('-')[0])
+        # Get leading integer of file name. e.i '1_batch1 copy.JPG'
+        corn_feature_id = int(feature_row[0].split('_')[0])
         corn_total_id   = int(total_count_row[0])
 
         # Seek the absolute reader to the current corn feature id
@@ -104,8 +104,10 @@ def generate_training_set():
         w_h_ratio   = float(feature_row[2])
         full_count  = int(total_count_row[3])
 
-        # Write the features and full kernel count to the data file.
-        data_writer.writerow([front_count, w_h_ratio, full_count])
+        # Write the features and full kernel count to the data file
+        # only if the features seem reasonable.
+        if front_count < full_count:
+            data_writer.writerow([front_count, w_h_ratio, full_count])
 
         try:
             # Repeat process for the next image in feature_reader.
@@ -129,16 +131,29 @@ def train(model_name):
     '''
 
     if model_name in os.listdir(MODELS_DIR):
-        print('A model already exists with that name.')
-        print('Please define a new model name.')
-        exit(-1)
+        # Choose how to handle.
+        # Possibly alert user.
+        pass
+    
 
     try:
-        data = np.genfromtxt('csv/dataset.csv', delimiter=',')
+        data = np.genfromtxt(f'csv/{model_name}_dataset.csv', delimiter=',')
+        if len(data) == 0:
+            print(f'Error: {model_name}_dataset.csv contains no data.')
+            exit(-1)
     except IOError as e:
         print(e)
-        print("dataset.csv will be created after a set of images have been processed.")
         exit(-1)
+
+    # When any dataset.csv only has one entry, np.genfrontxt will return a
+    # list instead of a matrix, which will cause this function to fail. data
+    # will be wrapped inside a list if it is one-dimensional.
+    try:
+        # Check if a second row can be accessed.
+        data[1][0]
+    except IndexError:
+        # Wrap data in list if the second row does not exist.
+        data = [data]
 
     x  = tf.placeholder(tf.float32,[None,N])     # Placeholder for N features.
     y_ = tf.placeholder(tf.float32, [None, 1])   # Placeholder for final kernel count.
