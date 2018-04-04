@@ -31,20 +31,21 @@ def natural_sort(l):
     alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(l, key = alphanum_key)
 
-def apply_mask():
+def apply_mask(export_flag):
     for file in os.listdir(photo_dir):
         if file.endswith(SUPPORTED_EXTS):
             image = cv2.imread(os.path.join(photo_dir, file))
 
             print(f'Masking image {file}')
             masked_image = mask.mask_yellow(image)
+            if export_flag is True:
+                os.chdir(output_dir)
+                cv2.imwrite('mask_' + file, masked_image)
 
-            os.chdir(output_dir)
-            cv2.imwrite('mask_' + file, masked_image)
         else:
             print(f'{file} is not a supported image format')
 
-def apply_contours():
+def apply_contours(export_flag):
     for file in os.listdir(photo_dir):
         if file.endswith(SUPPORTED_EXTS):
             image = cv2.imread(os.path.join(photo_dir, file))
@@ -53,12 +54,14 @@ def apply_contours():
             contour_results = contour.find_contours(mask.mask_yellow(image))
             contoured_image = contour_results.image
 
-            os.chdir(output_dir)
-            cv2.imwrite('contours_' + file, contoured_image)
+            if export_flag is True:
+                os.chdir(output_dir)
+                cv2.imwrite('contours_' + file, contoured_image)
+
         else:
             print(f'{file} is not a supported image format')
 
-def process(counting_method):
+def process(counting_method, export_flag):
     # Open csv file that the features will be written to
     with open(csv_features.FILENAME, 'w') as csvfile:
         feature_writer = csv.writer(csvfile, delimiter=csv_features.DELIM, quotechar=csv_features.QUOTECHAR, quoting=csv.QUOTE_MINIMAL)
@@ -82,28 +85,19 @@ def process(counting_method):
                 print(f'Visible kernels counted: {count_results.count}')
 
                 feature_writer.writerow([file, count_results.count, contour_results.avg_w_h_ratio])
-                os.chdir(output_dir)
-
-                # Prepend to the file the counting method used for testing purposes.
-                cv2.imwrite(f'{counting_method}_{file}', count_results.image)
+                
+                if export_flag is True:
+                    os.chdir(output_dir)
+                    # Prepend to the file the counting method used for testing purposes.
+                    cv2.imwrite(f'{counting_method}_{file}', count_results.image)
+                    
             else:
                 print(f'{file} is not a supported image format')
 
 def main(args):
-    if args.mask is True:
-        apply_mask()
-        exit(0)
-
-    if args.contour is True:
-        apply_contours()
-        exit(0)
-
-    if args.process is True:
-        if args.count_method in METHODS_DICT:
-            process(args.count_method)
-        else:
-            print(f'"{args.count_method}" is an invalid counting method. Try -h or --help for valid counting methods')
-        exit(0)
+    apply_mask(args.export)
+    apply_contours(args.export)
+    process('otsu', args.export)
 
     if args.data is True:
         trainer.generate_training_set()
@@ -121,9 +115,7 @@ def main(args):
 parser = argparse.ArgumentParser(description='Applies a mask and contours to pictures of corn.', prog='Corn Kernel Counter Prep Application')
 parser.add_argument('count_method', help='Choose the counting method for the kernels: "watershed" or "otsu"')
 parser.add_argument('--version', action='version', version='Version 0.1.0')
-parser.add_argument('-m', '--mask', action='store_true', default=False, help='Applies a mask to the corn images.')
-parser.add_argument('-c', '--contour', action='store_true', default=False, help='Draws contours on the corn images.')
-parser.add_argument('-p', '--process', action='store_true', default=False, help='Applies a mask then draws the contours on a masked image.')
+parser.add_argument('-e', '--export', action='store_true', default=False, help='Exports the photos after they are processed.')
 parser.add_argument('-d', '--data', action='store_true', default=False, help='Creates the data.csv file for training.')
 parser.add_argument('-t', '--train', action='store_true', default=False, help='Trains model from dataset.csv file')
 parser.add_argument('-f', '--full', action='store_true', default=False, help='prints counts')
