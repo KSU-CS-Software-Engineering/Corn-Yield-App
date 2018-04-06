@@ -23,45 +23,27 @@ METHODS_DICT = {
 
 SUPPORTED_EXTS = ('.JPG', 'jpg')
 
-"""
-Used to sort filenames numerically without leading zeros
-"""
 def natural_sort(l):
+    """Used to sort the filenames numerically without leading zeros
+
+    :param
+        l: A list of photos
+    :return:
+        Returns a list of photos sorted alphanumerically
+    """
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(l, key = alphanum_key)
 
-def apply_mask(export_flag):
-    for file in os.listdir(photo_dir):
-        if file.endswith(SUPPORTED_EXTS):
-            image = cv2.imread(os.path.join(photo_dir, file))
-
-            print(f'Masking image {file}')
-            masked_image = mask.mask_yellow(image)
-            if export_flag is True:
-                os.chdir(output_dir)
-                cv2.imwrite('mask_' + file, masked_image)
-
-        else:
-            print(f'{file} is not a supported image format')
-
-def apply_contours(export_flag):
-    for file in os.listdir(photo_dir):
-        if file.endswith(SUPPORTED_EXTS):
-            image = cv2.imread(os.path.join(photo_dir, file))
-
-            print(f'Contouring image {file}')
-            contour_results = contour.find_contours(mask.mask_yellow(image))
-            contoured_image = contour_results.image
-
-            if export_flag is True:
-                os.chdir(output_dir)
-                cv2.imwrite('contours_' + file, contoured_image)
-
-        else:
-            print(f'{file} is not a supported image format')
 
 def process(counting_method, export_flag):
+    """Processes a photo and prepares it for the TensorFlow code.
+
+    :param
+        counting_method: The counting method used to obtain the front-facing kernel count. Currently, this is fixed to the 'otsu' method.
+    :param
+        export_flag: A true or false flag stating if the user would like the photos exported or not.
+    """
     # Open csv file that the features will be written to
     with open(csv_features.FILENAME, 'w') as csvfile:
         feature_writer = csv.writer(csvfile, delimiter=csv_features.DELIM, quotechar=csv_features.QUOTECHAR, quoting=csv.QUOTE_MINIMAL)
@@ -89,14 +71,20 @@ def process(counting_method, export_flag):
                 if export_flag is True:
                     os.chdir(output_dir)
                     # Prepend to the file the counting method used for testing purposes.
+                    cv2.imwrite(f'{mask}_{file}', mask.mask_yellow(image))
+                    cv2.imwrite(f'{contour}_{file}', contour.find_contours(image))
                     cv2.imwrite(f'{counting_method}_{file}', count_results.image)
                     
             else:
                 print(f'{file} is not a supported image format')
 
+
 def main(args):
-    apply_mask(args.export)
-    apply_contours(args.export)
+    """Executes and controls the flow of the program
+
+    :param
+        args: The argparse arguments passed into the command line by the user.
+    """
     process('otsu', args.export)
 
     if args.data is True:
@@ -112,13 +100,14 @@ def main(args):
         print(f'The predicted kernel count is: {count}\n')
         exit(0)
 
-parser = argparse.ArgumentParser(description='Applies a mask and contours to pictures of corn.', prog='Corn Kernel Counter Prep Application')
-parser.add_argument('count_method', help='Choose the counting method for the kernels: "watershed" or "otsu"')
-parser.add_argument('--version', action='version', version='Version 0.1.0')
+
+parser = argparse.ArgumentParser(description='A command line tool written in Python that processes the corn photos and prepares them for TensorFlow.', prog='Corn Kernel Counter Prep Application')
+parser.add_argument('--version', action='version', version='Version 1.1.0')
 parser.add_argument('-e', '--export', action='store_true', default=False, help='Exports the photos after they are processed.')
 parser.add_argument('-d', '--data', action='store_true', default=False, help='Creates the data.csv file for training.')
 parser.add_argument('-t', '--train', action='store_true', default=False, help='Trains model from dataset.csv file')
 parser.add_argument('-f', '--full', action='store_true', default=False, help='prints counts')
+parser.add_argument('-m', '--modelName', action='store', help='Used to pass in the name of the model being trained.')
 args = parser.parse_args()
 
 try:
