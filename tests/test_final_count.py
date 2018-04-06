@@ -4,8 +4,7 @@ import os
 import csv
 import cv2
 sys.path.append("..") #Add top level directory to python path for imports
-from corn_app import contour
-from corn_app import mask
+from corn_app import feature
 from corn_app import trainer
 import re
 
@@ -70,11 +69,9 @@ class TestFeatures(unittest.TestCase):
                     total_count_file.close()
                     self.assertTrue(False)
 
-            image           = cv2.imread(os.path.join('tests/images', file))
-            contour_results = contour.find_contours(mask.mask_yellow(image))
-            contoured_image = contour_results.image
-            count_results   = contour.count_kernels(contoured_image, contour.OTSU_METHOD)
-            final_count     = trainer.get_count(TEST_MODEL, TEST_ITERATION, count_results.count, contour_results.avg_w_h_ratio)
+            file_path       = os.path.join('tests/images', file)
+            features        = feature.extract_features(file_path, 'otsu', None)
+            final_count     = trainer.get_count(TEST_MODEL, features)
             abs_final_count = int(total_count_row[3])
 
             percent_error = int(abs((final_count - abs_final_count) / abs_final_count) * 100)

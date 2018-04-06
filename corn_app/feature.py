@@ -10,6 +10,8 @@ from skimage.morphology import watershed
 from scipy import ndimage
 import cv2
 import numpy as np
+import ntpath
+import os
 import collections
 
 # RGB color values
@@ -23,8 +25,78 @@ CONTOUR_COLOR = RED
 BLOCK_SIZE = 71
 LINE_WIDTH = 5
 
+#HSV yellow color boundaries
+LOWER_BOUND_YELLOW = [20,100,100]
+UPPER_BOUND_YELLOW = [40,255,255]
+
 METHOD_NUMBER_BEGINNING = WATERSHED_METHOD = 0
 METHOD_NUMBER_ENDING    = OTSU_METHOD      = 1
+
+# The keys are valid inputs for the count_method argument
+METHODS_DICT = {
+    'watershed': WATERSHED_METHOD,
+    'otsu': OTSU_METHOD
+}
+
+class Features(object):
+
+    def __init__(self, filename, count, avg_w_h_ratio):
+        self.filename      = filename
+        self.count         = count
+        self.avg_w_h_ratio = avg_w_h_ratio
+
+    def to_list(self):
+        return [self.filename, self.count, self.avg_w_h_ratio]
+
+    def to_feed(self, x):
+        return {x: [[self.count, self.avg_w_h_ratio]]}
+
+
+def mask_yellow(image):
+    """Converts all image pixels not in the yellow HSV range to black
+
+    Args:
+        image (openCV Image): An open Image object.
+
+    Returns:
+        yellow_image (openCV Image): A BGR Image with yellow pixels extracted
+    """
+
+    if image is None:
+        return None
+
+    #convert image to hsv
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    '''blur hsv image so that pixels that are
+    reflection of light on kernels get some yellow in them
+    '''
+    blur = cv2.GaussianBlur(hsv_image, (5,5), 0)
+
+    #create numpy arrays for lower and upper bounds of yellow
+    lower_yellow = np.array(LOWER_BOUND_YELLOW)
+    upper_yellow = np.array(UPPER_BOUND_YELLOW)
+
+    #turn all pixels not in yellow range. returns an hsv image
+    yellow_mask = cv2.inRange(blur, lower_yellow, upper_yellow)
+
+    '''
+    erosion:
+        kernel(numpy array): When cv2.erode is called, the yellow mask
+        is inspected frame by frame with the dimensions of the kernel.
+        If more black pixels than yellow in a frame, the yellow pixels
+        are turned black and vice versa.
+
+        Note: not to be confused with corn kernel
+    '''
+    kernel = np.ones((12,4), np.uint8)
+    erosion = cv2.erode(yellow_mask, kernel, iterations = 1)
+
+    #apply the eroded image to mask original image
+    yellow_image = cv2.bitwise_and(image, image, mask = erosion)
+
+    return yellow_image
+
 
 def find_contours(image):
     """Finds the contours of kernels on the ears of corn
@@ -160,6 +232,43 @@ def otsu_method(image):
 
 COUNTING_METHODS = [watershed_method, otsu_method]
 
+def extract_features(file_path, counting_method, output_path):
+    """Finds the contours of kernels on the ears of corn
+    Args:
+        file_path (string)      : The file_path of the image
+        counting_method (string): The counting method used
+        output_path (string)    : Optional method to output intermediary images to
+            output path. Pass in None otherwise.
+    Returns:
+        Features class -- An object containg the image's features.
+    """
+
+    file  = None
+    image = None
+
+    try:
+        image = cv2.imread(file_path)
+        file  = ntpath.basename(file_path)
+    except Exception as e:
+        print(e)
+
+    # Countour the image.
+    contour_results = find_contours(mask_yellow(image))
+    contoured_image = contour_results.image
+    if output_path:
+        export_file = os.path.join(output_path, f'contoured_{file}')
+        cv2.imwrite(export_file, contoured_image)
+
+    # Count the front facing kernels.
+    count_results   = count_kernels(contoured_image, METHODS_DICT[counting_method])
+    if output_path:
+        export_file = os.path.join(output_path, f'{counting_method}_{file}')
+        cv2.imwrite(export_file, count_results.image)
+
+    features = Features(file, count_results.count, contour_results.avg_w_h_ratio)
+
+    return features
+
 def count_kernels(image, method_number):
     """Routes the image to the specified counting method
 
@@ -175,12 +284,3 @@ def count_kernels(image, method_number):
         return COUNTING_METHODS[method_number](image)
     else:
         raise ValueError('Argument method_number is not within range')
-
-
-
-
-
-
-
-
-

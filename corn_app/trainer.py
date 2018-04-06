@@ -1,4 +1,5 @@
 from corn_app import csv_features
+from corn_app import feature
 import numpy as np
 import tensorflow as tf
 import json
@@ -11,7 +12,7 @@ ITERATIONS = 1000
 N          = 2   # Number of features.
 
 #expects float as param
-def get_count(model_name, iterations, front_count, ratio):
+def get_count(model_name, features):
     """
     Uses last trained model to predict the full kernel count
 
@@ -23,7 +24,7 @@ def get_count(model_name, iterations, front_count, ratio):
         full_count(int): This is the predicted full kernel count calculated by our last trained model
     """
     last_training_dir = f'{len(os.listdir(MODELS_DIR))}'
-    model_file        = f'{model_name}-{iterations}.meta'
+    model_file        = f'{model_name}-{ITERATIONS}.meta'
 
     try:
         saver = tf.train.import_meta_graph(os.path.join(MODELS_DIR, model_name, model_file))
@@ -41,7 +42,7 @@ def get_count(model_name, iterations, front_count, ratio):
         y  = tf.matmul(x, W) + b  # Machine learning model.
 
         # Generate full count.
-        feed = {x: [[front_count, ratio]]}
+        feed = {x: [[features.count, features.avg_w_h_ratio]]}
         full_count = session.run(y, feed_dict=feed)
         full_count = int(full_count[0][0])
 
