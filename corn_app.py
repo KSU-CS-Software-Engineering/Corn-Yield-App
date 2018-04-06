@@ -81,6 +81,17 @@ def main(args):
         args: The argparse arguments passed into the command line by the user.
     """
 
+    if args.all is True:
+        if args.modelname is None:
+            print('A name for the new model is needed.')
+            exit(0)
+
+        features_process(args.export)
+        trainer.generate_training_set(args.modelname)
+        trainer.train(args.modelname)
+        print(f'Model {args.modelname} trained.')
+        exit(0)
+
     if args.features is True:
         features_process(args.export)
 
@@ -89,7 +100,7 @@ def main(args):
             print('A model name is needed for the data set.')
             exit(0)
 
-        trainer.generate_training_set(model)
+        trainer.generate_training_set(args.modelname)
         exit(0)
 
     if args.train is True:
@@ -120,6 +131,7 @@ def main(args):
 parser = argparse.ArgumentParser(description='A command line tool written in Python that processes the corn photos and prepares them for TensorFlow.', prog='Corn Kernel Counter Prep Application')
 parser.add_argument('--version', action='version', version='Version 1.1.0')
 parser.add_argument('-e', '--export',   action='store_true', default=False, help='Exports the photos after they are processed.')
+parser.add_argument('-a', '--all',      action='store_true', help='Processes photos, creates the data set for a model and trains said model on the data set.')
 parser.add_argument('-d', '--data',     action='store_true', default=False, help='Creates the data.csv file for training.')
 parser.add_argument('-t', '--train',    action='store_true', default=False, help='Trains model from dataset.csv file')
 parser.add_argument('-c', '--count',    action='store_true', default=False, help='gets_count')
