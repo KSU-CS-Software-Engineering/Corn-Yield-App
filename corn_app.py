@@ -30,7 +30,7 @@ def natural_sort(l):
     return sorted(l, key = alphanum_key)
 
 
-def features_process(export_flag):
+def features_process(output_path):
     """Processes a photo and prepares it for the TensorFlow code.
 
     :param
@@ -45,9 +45,6 @@ def features_process(export_flag):
 
         # Process ears from lowest corn id to highest.
         sorted_photos     = natural_sort(os.listdir(photo_dir))
-
-        output_path = None
-        if export_flag: output_path = output_dir
 
         # Gather progress data for the user.
         file_count        = len(sorted_photos)
@@ -80,13 +77,17 @@ def main(args):
     :param
         args: The argparse arguments passed into the command line by the user.
     """
+    output_path = None
+
+    if args.export is True:
+        output_path = output_dir
 
     if args.all is True:
         if args.modelname is None:
             print('A name for the new model is needed.')
             exit(0)
 
-        features_process(args.export)
+        features_process(output_path)
         trainer.generate_training_set(args.modelname)
         trainer.train(args.modelname)
         print(f'Model {args.modelname} trained.')
@@ -122,7 +123,7 @@ def main(args):
             exit(0)
 
         print('Processing image.')
-        features = feature.extract_features(args.path, 'otsu', None)
+        features = feature.extract_features(args.path, 'otsu', output_path)
         count    = trainer.get_count(args.modelname, features)
         print(f'The predicted kernel count is: {count}\n')
         exit(0)
