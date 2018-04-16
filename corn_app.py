@@ -94,7 +94,7 @@ def main(args):
         exit(0)
 
     if args.features is True:
-        features_process(args.export)
+        features_process(output_path)
 
     if args.data is True:
         if args.modelname is None:
